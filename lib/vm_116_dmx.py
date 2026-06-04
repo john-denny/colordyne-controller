@@ -1,24 +1,8 @@
 """
-vm116_dmx.py — Velleman VM116 / K8062 DMX controller driver (pyusb)
+vm116_dmx.py — Velleman VM116 / K8062 DMX controller driver
 
 Hardware: Velleman VM116 (pre-assembled) / K8062 (kit)
 Protocol: USB HID, low-speed, 8-byte interrupt transfers to endpoint 0x01
-
----- Packet format (all packets are exactly 8 bytes) ----
-
-Command 4  —  "start of frame" + 6 channel values with leading-zero skip
-  [4, skip+1, ch[skip], ch[skip+1], ch[skip+2], ch[skip+3], ch[skip+4], ch[skip+5]]
-  'skip' = number of leading zero channels to jump over (max 100)
-
-Command 5  —  "skip zeros mid-stream" + 6 channel values
-  [5, n_zeros, ch[i], ch[i+1], ch[i+2], ch[i+3], ch[i+4], ch[i+5]]
-  n_zeros = number of zero channels that were skipped before these 6
-
-Command 2  —  "7 consecutive channels"
-  [2, ch[i], ch[i+1], ch[i+2], ch[i+3], ch[i+4], ch[i+5], ch[i+6]]
-
-Command 3  —  "single channel" (used for leftover channels at end)
-  [3, ch[i], 0, 0, 0, 0, 0, 0]
 """
 
 import sys
@@ -53,8 +37,6 @@ class VM116:
 
         Args:
             channel_count: How many DMX channels to transmit (1–512).
-                           Keeping this small speeds things up significantly
-                           because the device is limited to ~800 bytes/sec.
         """
         if not (1 <= channel_count <= DMX_CHANNELS):
             raise ValueError(f"channel_count must be 1–{DMX_CHANNELS}")
@@ -87,9 +69,13 @@ class VM116:
         self._dev.set_configuration()
         usb.util.claim_interface(self._dev, 0)
 
-    # ------------------------------------------------------------------ #
-    #  Public API                                                          #
-    # ------------------------------------------------------------------ #
+        # Warm up
+        time.sleep(0.1)
+
+        # Send empty data, to ensure the channel is open
+        self.data = [0] * DMX_CHANNELS
+        self._send_dmx()
+
 
     def set_channel(self, channel: int, value: int) -> None:
         """
@@ -119,7 +105,6 @@ class VM116:
         """
         Set's the channels to the calibrated d65 values
         """
-        print("Setting lights to D65")
         self.set_channels({
             1: 103, 2: 211, 3: 131, 4:   0, 5: 123,
             6: 191, 7: 178, 8: 255, 9:  51, 10: 183,
@@ -238,7 +223,7 @@ if __name__ == "__main__":
 
     with VM116(channel_count=24) as dmx:
 
-        print(f"Fade all 24 channels up...")
+        print("Fade all 24 channels up...")
         for level in range(0, 256, 5):
             dmx.set_all(level)
             dmx.send()
