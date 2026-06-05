@@ -31,19 +31,20 @@ class VM116:
         dmx.close()
     """
 
-    def __init__(self, channel_count: int = 24):
+    def __init__(self, channel_count: int = 24, brightness: float=1):
         """
         Open the VM116.
 
         Args:
             channel_count: How many DMX channels to transmit (1–512).
+            brightness: How bright is the light (1)
         """
         if not (1 <= channel_count <= DMX_CHANNELS):
             raise ValueError(f"channel_count must be 1–{DMX_CHANNELS}")
 
         self.channel_count = channel_count
         self._data = [0] * DMX_CHANNELS
-
+        self.brightness = brightness
         # Find the device
         self._dev = usb.core.find(idVendor=VENDOR_ID, idProduct=PRODUCT_ID)
         if self._dev is None:
@@ -77,6 +78,17 @@ class VM116:
         self._send_dmx()
 
 
+
+    @property
+    def brightness(self) -> float:
+        return self._brightness
+
+    @brightness.setter
+    def brightness(self, value: float) -> None:
+        if not (0.0 <= value <= 1.0):
+            raise ValueError("brightness must be between 0.0 and 1.0")
+        self._brightness = float(value)
+
     def set_channel(self, channel: int, value: int) -> None:
         """
         Set a single DMX channel value (does not transmit yet).
@@ -89,7 +101,7 @@ class VM116:
             raise ValueError(f"channel must be 1–{DMX_CHANNELS}")
         if not (0 <= value <= 255):
             raise ValueError("value must be 0–255")
-        self._data[channel - 1] = value
+        self._data[channel - 1] = int(value * self.brightness)
 
     def set_channels(self, values: dict) -> None:
         """
