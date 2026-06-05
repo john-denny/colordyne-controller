@@ -6,7 +6,64 @@ The lights are controlled via a DMX interface (a standard that uses the same con
 245
 
 
+## Using vm116 in your own project
+
+The `vm116` package can be added to any Python project directly from this repository.
+
+### Install
+```
+uv add git+https://github.com/john-denny/colordyne-controller
+```
+Or with pip:
+```
+pip install git+https://github.com/john-denny/colordyne-controller
+```
+
+### Usage
+
+```python
+from vm116 import VM116
+import time
+
+
+with VM116() as dmx:
+
+    end = time.time() + 5
+    
+    while time.time() < end:
+        dmx.set_d65()
+        time.sleep(0.05)
+
+    end = time.time() + 5
+    dmx.brightness = 0.2
+    while time.time() < end:
+        dmx.set_d65()
+        time.sleep(0.05)
+from vm116 import VM116
+```
+
+You can also control individual channels:
+
+```python
+from vm116 import VM116
+
+with VM116() as dmx:
+    dmx.set_channel(1, 255)   # channel 1 → full
+    dmx.set_channel(5, 128)   # channel 5 → half
+    dmx.send()                # push to the bus
+```
+
+`brightness` is a multiplier (0.0–1.0) applied to all channel values at send time. It can be changed at any point without needing to re-set individual channels.
+
+### Requirements
+
+- Python 3.14+
+- [pyusb](https://github.com/pyusb/pyusb) (installed automatically)
+- On Windows: install a WinUSB driver for the VM116
+- On Linux/macOS: run with `sudo`, or configure udev rules / a codeless kext
+
 ## Index
+This is the current configuration for the colordyne lights in the imaging lab in university of galway
 
 | DMX Channel | Name       | Wavelength (nm) | D65 Value (0-255) |
 | ----------- | ---------- | --------------- | ----------------- |

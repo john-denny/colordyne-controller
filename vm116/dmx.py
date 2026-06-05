@@ -1,5 +1,5 @@
 """
-vm116_dmx.py — Velleman VM116 / K8062 DMX controller driver
+dmx.py — Velleman VM116 / K8062 DMX controller driver
 
 Hardware: Velleman VM116 (pre-assembled) / K8062 (kit)
 Protocol: USB HID, low-speed, 8-byte interrupt transfers to endpoint 0x01
@@ -112,7 +112,7 @@ class VM116:
         """
         for ch, val in values.items():
             self.set_channel(ch, val)
-    
+
     def set_d65(self) -> None:
         """
         Set's the channels to the calibrated d65 values

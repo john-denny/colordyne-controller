@@ -1,4 +1,4 @@
-from lib.vm_116_dmx import VM116
+from vm116 import VM116
 import time
 
 
